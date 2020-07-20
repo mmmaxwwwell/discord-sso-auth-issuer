@@ -50,7 +50,7 @@ app.get("/discord/callback", async (req, res, next) => {
       flags
     }, process.env.KEY);
 
-    res.cookie('jwt_token', jwt_token, { domain: "massive.games", path: '/', secure: true, sameSite: 'Lax', httpOnly: true })
+    res.cookie('jwt_token', jwt_token, { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true })
     res.redirect(process.env.SUCCESS_REDIRECT)
   }catch(err){
     res.status(500);
