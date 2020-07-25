@@ -1,5 +1,4 @@
 var jwt = require('jsonwebtoken');
-process.env.DEBUG = "express:*";
 const express = require("express")
 const expressWs = require( "express-ws")
 const cookieParser = require( "cookie-parser")
@@ -21,11 +20,17 @@ app.get("/discord/callback", async (req, res, next) => {
       expires_in,
       refresh_token,
       scope,
-      token_type
+      token_type,
     } = await oauth.tokenRequest({
       code: req.query.code,
       grantType: process.env.GRANT_TYPE,
-    });
+    }).catch(console.error);
+
+    if(!access_token || expires_in){
+      res.status(401);
+      res.end();
+      return
+    }
 
     const {
       id,
@@ -36,7 +41,13 @@ app.get("/discord/callback", async (req, res, next) => {
       discriminator,
       public_flags,
       flags
-    } = await oauth.getUser(access_token)
+    } = await oauth.getUser(access_token).catch(console.error)
+
+    if(!id || username){
+      res.status(401);
+      res.end();
+      return
+    }
 
     const jwt_token = jwt.sign({
       expires: Date.now() + expires_in,
