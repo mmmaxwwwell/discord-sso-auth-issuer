@@ -23,7 +23,7 @@ app.get("/discord/callback", async (req, res, next) => {
   const access_token = tokenRequestResponse.access_token
   const expires_in = tokenRequestResponse.expires_in
   
-  if(!access_token || expires_in){
+  if(!(access_token && expires_in)){
     console.log({event: 'auth-failure', tokenRequestResponse})
     res.status(401);
     res.end();
