@@ -14,24 +14,25 @@ const port = parseInt(process.env.PORT);
 app.use(cookieParser());
 
 app.get("/discord/callback", async (req, res, next) => {
+  
+  const tokenRequestResponse = await oauth.tokenRequest({
+    code: req.query.code,
+    grantType: process.env.GRANT_TYPE,
+  }).catch(console.error);
+
+  const access_token = tokenRequestResponse.access_token
+  const expires_in = tokenRequestResponse.expires_in
+  
+  if(!access_token || expires_in){
+    console.log({event: 'auth-failure', tokenRequestResponse})
+    res.status(401);
+    res.end();
+    return
+  }
+    
+  const getUserResponse = await oauth.getUser(access_token).catch(console.error)
+
   try{
-    const {
-      access_token,
-      expires_in,
-      refresh_token,
-      scope,
-      token_type,
-    } = await oauth.tokenRequest({
-      code: req.query.code,
-      grantType: process.env.GRANT_TYPE,
-    }).catch(console.error);
-
-    if(!access_token || expires_in){
-      res.status(401);
-      res.end();
-      return
-    }
-
     const {
       id,
       username,
@@ -41,13 +42,7 @@ app.get("/discord/callback", async (req, res, next) => {
       discriminator,
       public_flags,
       flags
-    } = await oauth.getUser(access_token).catch(console.error)
-
-    if(!id || username){
-      res.status(401);
-      res.end();
-      return
-    }
+    } = getUserResponse
 
     const jwt_token = jwt.sign({
       expires: Date.now() + expires_in,
@@ -63,14 +58,15 @@ app.get("/discord/callback", async (req, res, next) => {
 
     res.cookie('jwt_token', jwt_token, { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true })
     res.redirect(process.env.SUCCESS_REDIRECT)
-  }catch(err){
-    res.status(500);
+    res.status(200);
     res.end();
-    console.error(err)
+    return
+  }catch(error){
+    console.log({error, getUserResponse, tokenRequestResponse})
+    res.status(401);
+    res.end();
     return
   }
-  res.status(200);
-  res.end();
 })
 
 app.get("/", function (req, res, next) {
