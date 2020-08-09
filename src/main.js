@@ -82,5 +82,6 @@ app.get("/", function (req, res, next) {
 })
 
 
+provider.init()
 groupsProvider.init()
 app.listen(port, () => console.log(`discord-sso-auth-issuer listening on port ${port}${process.env.DEBUG ? " with debug output" : ""}!`))
