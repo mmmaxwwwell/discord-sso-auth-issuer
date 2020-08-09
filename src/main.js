@@ -83,6 +83,10 @@ app.get("/", function (req, res, next) {
 })
 
 
-provider.init()
+provider.init({
+  clientId: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
+  redirectUri: process.env.REDIRECT_URI,
+})
 groupsProvider.init()
 app.listen(port, () => console.log(`discord-sso-auth-issuer listening on port ${port}${process.env.DEBUG ? " with debug output" : ""}!`))

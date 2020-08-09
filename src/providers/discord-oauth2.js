@@ -8,10 +8,10 @@ const debug = (event, ...rest) => {
 
 const init = ({clientId, clientSecret, redirectUri}) => {
   oauth = new DiscordOauth2({
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    redirectUri: process.env.REDIRECT_URI,
-  });
+    clientId,
+    clientSecret,
+    redirectUri,
+  })
 }
 
 const authorize = ({code, grantType, scope}) => new Promise(async(resolve,reject) => {
