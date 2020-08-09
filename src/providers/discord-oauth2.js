@@ -6,7 +6,7 @@ const debug = (event, ...rest) => {
     console.log({event, rest:JSON.stringify(rest)})
 }
 
-const init = () => {
+const init = ({clientId, clientSecret, redirectUri}) => {
   oauth = new DiscordOauth2({
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
@@ -14,9 +14,13 @@ const init = () => {
   });
 }
 
-const authorize = ({code, grant_type}) => new Promise(async(resolve,reject) => {
+const authorize = ({code, grantType, scope}) => new Promise(async(resolve,reject) => {
   console.log({event: 'authorize', code, grant_type})
-  const tokenRequestResponse = await oauth.tokenRequest({code, grant_type}).catch(console.error);
+  const tokenRequestResponse = await oauth.tokenRequest({
+    code, 
+    scope,
+    grantType
+  }).catch(console.error);
 
   if(!tokenRequestResponse){
     resolve(false)

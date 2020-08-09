@@ -18,7 +18,8 @@ app.get("/discord/callback", async (req, res, next) => {
   
   const result = await provider.authorize({
     code: req.query.code,
-    grant_type: process.env.GRANT_TYPE,
+    grantType: process.env.GRANT_TYPE,
+    scope: process.env.SCOPE
   })
   
   debug('callback-validate-result', { result })
