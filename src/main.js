@@ -37,7 +37,7 @@ app.get("/discord/callback", async (req, res, next) => {
       flags
     } = result)
   }catch(error){
-    console.log({event:'error-destructuring-get-user-repsonse', tokenRequestResponse})
+    console.log({event:'error-destructuring-get-user-repsonse', result})
     res.status(401);
     res.end();
     return
