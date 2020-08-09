@@ -10,6 +10,11 @@ const oauth = new DiscordOauth2({
   redirectUri: process.env.REDIRECT_URI,
 });
 
+const debug = (event, ...rest) => {
+  if(process.env.DEBUG)
+    console.log({event, rest})
+}
+
 const port = parseInt(process.env.PORT);
 app.use(cookieParser());
 
@@ -20,8 +25,14 @@ app.get("/discord/callback", async (req, res, next) => {
     grantType: process.env.GRANT_TYPE,
   }).catch(console.error);
 
-  const access_token = tokenRequestResponse.access_token
-  const expires_in = tokenRequestResponse.expires_in
+  debug('token-request-response', { tokenRequestResponse })
+
+  let access_token, expires_in
+  try{
+    ({access_token, expires_in} = tokenRequestResponse)
+  }catch(ex){
+    console.log({event:'error-destructuring-token-request-response', tokenRequestResponse})
+  }
   
   if(!(access_token && expires_in)){
     console.log({event: 'auth-failure', tokenRequestResponse})
@@ -31,9 +42,12 @@ app.get("/discord/callback", async (req, res, next) => {
   }
     
   const getUserResponse = await oauth.getUser(access_token).catch(console.error)
+  let id, username, mfa_enabled, locale, avatar, discriminator, public_flags, flags
+
+  debug('get-user-response', { getUserResponse })
 
   try{
-    const {
+    ({
       id,
       username,
       mfa_enabled,
@@ -42,9 +56,16 @@ app.get("/discord/callback", async (req, res, next) => {
       discriminator,
       public_flags,
       flags
-    } = getUserResponse
+    } = getUserResponse)
+  }catch(error){
+    console.log({event:'error-destructuring-get-user-repsonse', tokenRequestResponse, getUserResponse})
+    res.status(401);
+    res.end();
+    return
+  }
 
-    const jwt_token = jwt.sign({
+  try{
+    const assertions = {
       expires: Date.now() + expires_in,
       id,
       username,
@@ -54,15 +75,18 @@ app.get("/discord/callback", async (req, res, next) => {
       discriminator,
       public_flags,
       flags
-    }, process.env.KEY);
+    }
+    const jwt_token = jwt.sign(assertions, process.env.KEY);
 
-    res.cookie('jwt_token', jwt_token, { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true })
+    const options = { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
+    debug('issuing-jwt', { assertions, options, redirect: process.env.SUCCESS_REDIRECT })
+    res.cookie('jwt_token', jwt_token, options)
     res.redirect(process.env.SUCCESS_REDIRECT)
     res.status(200);
     res.end();
     return
   }catch(error){
-    console.log({error, getUserResponse, tokenRequestResponse})
+    console.log({event:'error-gen-jwt', getUserResponse, tokenRequestResponse})
     res.status(401);
     res.end();
     return
