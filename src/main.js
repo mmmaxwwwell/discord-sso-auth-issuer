@@ -1,6 +1,6 @@
 var jwt = require('jsonwebtoken');
 const express = require("express")
-const provider = require(`${process.env.PROVIDER}.js`)
+const provider = require(`${process.env.PROVIDER || 'discord-oauth2'}.js`)
 const cookieParser = require( "cookie-parser")
 const groupsProvider = require('./groupsProvider.js')
 const { app }= express()
@@ -64,13 +64,13 @@ app.get("/discord/callback", async (req, res, next) => {
     debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
     res.cookie('jwt_token', jwt_token, options)
     res.redirect(process.env.SUCCESS_REDIRECT)
-    res.status(200);
-    res.end();
+    res.status(200)
+    res.end()
     return
   }catch(error){
     console.log({event:'error-gen-jwt', getUserResponse, tokenRequestResponse})
-    res.status(401);
-    res.end();
+    res.status(401)
+    res.end()
     return
   }
 })
@@ -82,4 +82,4 @@ app.get("/", function (req, res, next) {
 
 
 groupsProvider.init()
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+app.listen(port, () => console.log(`Example app listening on port ${port}!`))
