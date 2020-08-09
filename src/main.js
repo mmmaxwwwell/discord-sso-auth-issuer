@@ -3,15 +3,16 @@ const express = require("express")
 const provider = require(`./providers/${process.env.PROVIDER || 'discord-oauth2'}.js`)
 const cookieParser = require("cookie-parser")
 const groupsProvider = require('./groupsProvider.js')
-const { app }= express()
+const app = express()
 
 const debug = (event, ...rest) => {
   if(process.env.DEBUG)
     console.log({event, rest})
 }
 
-const port = parseInt(process.env.PORT);
-app.use(cookieParser());
+const port = parseInt(process.env.PORT)
+
+app.use(cookieParser())
 
 app.get("/discord/callback", async (req, res, next) => {
   
