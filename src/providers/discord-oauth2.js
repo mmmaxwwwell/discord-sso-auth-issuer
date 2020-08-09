@@ -15,7 +15,7 @@ const init = ({clientId, clientSecret, redirectUri}) => {
 }
 
 const authorize = ({code, grantType, scope}) => new Promise(async(resolve,reject) => {
-  console.log({event: 'authorize', code, grant_type})
+  console.log({event: 'authorize', code, grantType, scope})
   const tokenRequestResponse = await oauth.tokenRequest({
     code, 
     scope,
