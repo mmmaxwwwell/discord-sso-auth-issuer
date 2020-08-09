@@ -3,7 +3,7 @@ let oauth
 
 const debug = (event, ...rest) => {
   if(process.env.DEBUG)
-    console.log({event, rest})
+    console.log({event, rest:JSON.stringify(rest)})
 }
 
 const init = () => {
@@ -15,10 +15,8 @@ const init = () => {
 }
 
 const authorize = ({code, grantType}) => new Promise(async(resolve,reject) => {
-  const tokenRequestResponse = await oauth.tokenRequest({
-    code,
-    grantType,
-  }).catch(console.error);
+  console.log({event: 'authorize', code, grantType})
+  const tokenRequestResponse = await oauth.tokenRequest().catch(console.error);
 
   if(!tokenRequestResponse){
     resolve(false)

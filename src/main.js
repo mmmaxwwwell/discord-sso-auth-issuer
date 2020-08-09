@@ -36,7 +36,7 @@ app.get("/discord/callback", async (req, res, next) => {
       flags
     } = result)
   }catch(error){
-    console.log({event:'error-destructuring-get-user-repsonse', tokenRequestResponse, getUserResponse})
+    console.log({event:'error-destructuring-get-user-repsonse', tokenRequestResponse})
     res.status(401);
     res.end();
     return
@@ -69,7 +69,7 @@ app.get("/discord/callback", async (req, res, next) => {
     res.end()
     return
   }catch(error){
-    console.log({event:'error-gen-jwt', getUserResponse, tokenRequestResponse})
+    console.log({event:'error-gen-jwt', tokenRequestResponse})
     res.status(401)
     res.end()
     return
