@@ -6,6 +6,7 @@ const init = () => {
 
 const getGroups = async (user) => new Promise((resolve,reject) => {
   resolve(groupsLookup[user] || [])
+  return
 })
 
 module.exports = { init,  getGroups }
