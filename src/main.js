@@ -1,14 +1,9 @@
 var jwt = require('jsonwebtoken');
 const express = require("express")
-const expressWs = require( "express-ws")
+const provider = require(`${process.env.PROVIDER}.js`)
 const cookieParser = require( "cookie-parser")
-const { app, getWss, applyTo } = expressWs(express());
-const DiscordOauth2 = require('discord-oauth2') 
-const oauth = new DiscordOauth2({
-  clientId: process.env.CLIENT_ID,
-  clientSecret: process.env.CLIENT_SECRET,
-  redirectUri: process.env.REDIRECT_URI,
-});
+const groupsProvider = require('./groupsProvider.js')
+const { app }= express()
 
 const debug = (event, ...rest) => {
   if(process.env.DEBUG)
@@ -20,32 +15,14 @@ app.use(cookieParser());
 
 app.get("/discord/callback", async (req, res, next) => {
   
-  const tokenRequestResponse = await oauth.tokenRequest({
+  const result = await provider.authorize({
     code: req.query.code,
     grantType: process.env.GRANT_TYPE,
-  }).catch(console.error);
-
-  debug('token-request-response', { tokenRequestResponse })
-
-  let access_token, expires_in
-  try{
-    ({access_token, expires_in} = tokenRequestResponse)
-  }catch(ex){
-    console.log({event:'error-destructuring-token-request-response', tokenRequestResponse})
-  }
+  })
   
-  if(!(access_token && expires_in)){
-    console.log({event: 'auth-failure', tokenRequestResponse})
-    res.status(401);
-    res.end();
-    return
-  }
-    
-  const getUserResponse = await oauth.getUser(access_token).catch(console.error)
+  debug('callback-validate-result', { result })
+
   let id, username, mfa_enabled, locale, avatar, discriminator, public_flags, flags
-
-  debug('get-user-response', { getUserResponse })
-
   try{
     ({
       id,
@@ -56,7 +33,7 @@ app.get("/discord/callback", async (req, res, next) => {
       discriminator,
       public_flags,
       flags
-    } = getUserResponse)
+    } = result)
   }catch(error){
     console.log({event:'error-destructuring-get-user-repsonse', tokenRequestResponse, getUserResponse})
     res.status(401);
@@ -65,7 +42,8 @@ app.get("/discord/callback", async (req, res, next) => {
   }
 
   try{
-    const assertions = {
+    const groups = await groupsProvider.getGroups(`${username}#${discriminator}`)
+    const claims = {
       expires: Date.now() + expires_in,
       id,
       username,
@@ -74,12 +52,16 @@ app.get("/discord/callback", async (req, res, next) => {
       avatar,
       discriminator,
       public_flags,
-      flags
+      flags,
+      admin: groups.includes("Admin"),
+      moderator: groups.includes("Moderator"),
+      groups
     }
-    const jwt_token = jwt.sign(assertions, process.env.KEY);
+
+    const jwt_token = jwt.sign(claims, process.env.KEY);
 
     const options = { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
-    debug('issuing-jwt', { assertions, options, redirect: process.env.SUCCESS_REDIRECT })
+    debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
     res.cookie('jwt_token', jwt_token, options)
     res.redirect(process.env.SUCCESS_REDIRECT)
     res.status(200);
@@ -98,4 +80,6 @@ app.get("/", function (req, res, next) {
   res.end()
 })
 
+
+groupsProvider.init()
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
