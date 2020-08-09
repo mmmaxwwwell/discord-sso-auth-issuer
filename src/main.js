@@ -70,7 +70,7 @@ app.get("/discord/callback", async (req, res, next) => {
     res.end()
     return
   }catch(error){
-    console.log({event:'error-gen-jwt', tokenRequestResponse})
+    console.log({event:'error-gen-jwt', error })
     res.status(401)
     res.end()
     return
