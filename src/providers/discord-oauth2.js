@@ -1,9 +1,9 @@
 const DiscordOauth2 = require("discord-oauth2");
 let oauth
 
-const debug = (event, ...rest) => {
+const debug = (event, obj) => {
   if(process.env.DEBUG)
-    console.log({event, rest:JSON.stringify(rest)})
+    console.log({event, obj})
 }
 
 const init = ({clientId, clientSecret, redirectUri}) => {
@@ -31,14 +31,16 @@ const authorize = ({code, grantType, scope}) => new Promise(async(resolve,reject
 
   let access_token, expires_in
   try{
-    ({access_token, expires_in} = tokenRequestResponse)
+    console.log("wtfmate", {tokenRequestResponse})
+    expires_in = tokenRequestResponse.expires_in
+    access_token = tokenRequestResponse.access_token
   }catch(ex){
     console.log({event:'error-destructuring-token-request-response', tokenRequestResponse})
     resolve(false)
     return
   }
   
-  if(!(access_token && expires_in)){
+  if(!(access_token || expires_in)){
     console.log({event: 'auth-failure', tokenRequestResponse})
     resolve(false)
     return
@@ -53,7 +55,7 @@ const authorize = ({code, grantType, scope}) => new Promise(async(resolve,reject
 
   debug('get-user-claims-ok', { userClaims, tokenRequestResponse })
 
-  resolve(userClaims)
+  resolve({...userClaims, expires_in})
   return
 })
 

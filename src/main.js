@@ -5,9 +5,9 @@ const cookieParser = require("cookie-parser")
 const groupsProvider = require('./groupsProvider.js')
 const app = express()
 
-const debug = (event, ...rest) => {
+const debug = (event, obj) => {
   if(process.env.DEBUG)
-    console.log({event, rest})
+    console.log({event, obj})
 }
 
 const port = parseInt(process.env.PORT)
@@ -22,9 +22,9 @@ app.get("/discord/callback", async (req, res, next) => {
     scope: process.env.SCOPE
   })
   
-  debug('callback-validate-result', { result })
+  debug('callback-validate-result', result)
 
-  let id, username, mfa_enabled, locale, avatar, discriminator, public_flags, flags
+  let id, username, mfa_enabled, locale, avatar, discriminator, public_flags, flags, expires_in
   try{
     ({
       id,
@@ -34,7 +34,8 @@ app.get("/discord/callback", async (req, res, next) => {
       avatar,
       discriminator,
       public_flags,
-      flags
+      flags,
+      expires_in
     } = result)
   }catch(error){
     console.log({event:'error-destructuring-get-user-repsonse', result})
@@ -66,7 +67,6 @@ app.get("/discord/callback", async (req, res, next) => {
     debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
     res.cookie('jwt_token', jwt_token, options)
     res.redirect(process.env.SUCCESS_REDIRECT)
-    res.status(200)
     res.end()
     return
   }catch(error){
