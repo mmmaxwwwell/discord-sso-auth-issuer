@@ -1,7 +1,7 @@
 var jwt = require('jsonwebtoken');
 const express = require("express")
 const provider = require(`./providers/${process.env.PROVIDER || 'discord-oauth2'}.js`)
-const cookieParser = require( "cookie-parser")
+const cookieParser = require("cookie-parser")
 const groupsProvider = require('./groupsProvider.js')
 const { app }= express()
 
