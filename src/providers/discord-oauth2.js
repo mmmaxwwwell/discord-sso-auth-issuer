@@ -14,8 +14,8 @@ const init = () => {
   });
 }
 
-const authorize = ({code, grantType}) => new Promise(async(resolve,reject) => {
-  console.log({event: 'authorize', code, grantType})
+const authorize = ({code, grant_type}) => new Promise(async(resolve,reject) => {
+  console.log({event: 'authorize', code, grant_type})
   const tokenRequestResponse = await oauth.tokenRequest().catch(console.error);
 
   if(!tokenRequestResponse){
