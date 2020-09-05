@@ -61,7 +61,7 @@ app.get("/discord/callback", async (req, res, next) => {
       groups
     }
 
-    const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'RS256'});
+    const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'HS384'});
 
     const options = { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
     debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
