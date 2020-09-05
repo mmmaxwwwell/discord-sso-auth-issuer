@@ -48,7 +48,7 @@ app.get("/discord/callback", async (req, res, next) => {
       discriminator,
       public_flags,
       flags
-    }, process.env.KEY);
+    }, process.env.KEY, {algorithm: 'RS256'});
 
     res.cookie('jwt_token', jwt_token, { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true })
     res.redirect(process.env.SUCCESS_REDIRECT)
