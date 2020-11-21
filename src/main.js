@@ -5,11 +5,6 @@ const cookieParser = require("cookie-parser")
 const groupsProvider = require('./groupsProvider.js')
 const app = express()
 
-Date.prototype.addMins = function(m) {
-  this.setTime(this.getTime() + (m*60*1000));
-  return this;
-}
-
 const debug = (event, obj) => {
   if(process.env.DEBUG)
     console.log({event, obj})
@@ -52,7 +47,7 @@ app.get("/discord/callback", async (req, res, next) => {
   try{
     const groups = await groupsProvider.getGroups(`${username}#${discriminator}`)
     const claims = {
-      expires: Date.now().addMins(process.env.JWT_VALID_MINS),
+      expires: Date.now() + parseInt(process.env.JWT_VALID_MINS) * 60000,
       id,
       username,
       mfa_enabled,
