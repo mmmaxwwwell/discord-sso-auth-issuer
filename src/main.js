@@ -5,6 +5,11 @@ const cookieParser = require("cookie-parser")
 const groupsProvider = require('./groupsProvider.js')
 const app = express()
 
+Date.prototype.addMins = function(m) {
+  this.setTime(this.getTime() + (m*60*1000));
+  return this;
+}
+
 const debug = (event, obj) => {
   if(process.env.DEBUG)
     console.log({event, obj})
@@ -38,16 +43,18 @@ app.get("/discord/callback", async (req, res, next) => {
       expires_in
     } = result)
   }catch(error){
-    console.log({event:'error-destructuring-get-user-repsonse', result})
+    console.log({event:'error-destructuring-get-user-response', result})
     res.status(401);
     res.end();
     return
   }
 
+  let jwt_expiry = Date.now().addMins(process.env.JWT_VALID_MINS)
+
   try{
     const groups = await groupsProvider.getGroups(`${username}#${discriminator}`)
     const claims = {
-      expires: Date.now() + expires_in,
+      expires: jwt_expiry,
       id,
       username,
       mfa_enabled,
