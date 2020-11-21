@@ -49,12 +49,10 @@ app.get("/discord/callback", async (req, res, next) => {
     return
   }
 
-  let jwt_expiry = Date.now().addMins(process.env.JWT_VALID_MINS)
-
   try{
     const groups = await groupsProvider.getGroups(`${username}#${discriminator}`)
     const claims = {
-      expires: jwt_expiry,
+      expires: Date.now().addMins(process.env.JWT_VALID_MINS),
       id,
       username,
       mfa_enabled,
