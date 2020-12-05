@@ -4,6 +4,7 @@ const provider = require(`./providers/${process.env.PROVIDER || 'discord-oauth2'
 const cookieParser = require("cookie-parser")
 const groupsProvider = require('./groupsProvider.js')
 const app = express()
+const HEADER_NAME = process.env.HEADER_NAME || "jwt_token";
 
 const debug = (event, obj) => {
   if(process.env.DEBUG)
@@ -65,7 +66,7 @@ app.get("/discord/callback", async (req, res, next) => {
 
     const options = { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
     debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
-    res.cookie('jwt_token', jwt_token, options)
+    res.cookie(HEADER_NAME, jwt_token, options)
     res.redirect(process.env.SUCCESS_REDIRECT)
     res.end()
     return
