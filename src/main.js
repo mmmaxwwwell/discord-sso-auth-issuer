@@ -54,6 +54,17 @@ app.get("/discord/callback", async (req, res, next) => {
     return
   }
 
+  let forwardedFor, ip
+  try{
+    forwardedFor = req.headers['x-forwarded-for']
+    ip = req.ip;
+  } catch(error) {
+    console.log({event:'error-getting-source-ip', id, username, discriminator, error })
+    res.status(401)
+    res.end()
+    return
+  }
+
   try{
     const claims = {
       expires: Date.now() + parseInt(process.env.JWT_VALID_MINS) * 60000,
@@ -65,7 +76,10 @@ app.get("/discord/callback", async (req, res, next) => {
       discriminator,
       public_flags,
       flags,
-      roles
+      roles,
+      forwardedFor,
+      ip,
+      domain: process.env.JWT_DOMAIN
     }
 
     const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'HS384'});
