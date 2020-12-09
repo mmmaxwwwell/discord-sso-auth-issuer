@@ -21,6 +21,13 @@ app.get("/discord/callback", async (req, res, next) => {
     grantType: process.env.GRANT_TYPE,
     scope: process.env.SCOPE
   })
+
+  if(!result){
+    console.log({event:'oauth-result-error', result})
+    res.status(401)
+    res.end()
+    return
+  }
   
   debug('callback-validate-result', result)
 
