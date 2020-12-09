@@ -1,6 +1,6 @@
 var jwt = require('jsonwebtoken');
 var discord = require('./providers/discord')
-const express = require("express")
+const express = require("express")u
 const provider = require(`./providers/${process.env.PROVIDER || 'discord-oauth2'}.js`)
 const cookieParser = require("cookie-parser")
 const app = express()
@@ -109,5 +109,5 @@ provider.init({
   clientSecret: process.env.CLIENT_SECRET,
   redirectUri: process.env.REDIRECT_URI,
 })
-groupsProvider.init()
+
 app.listen(port, () => console.log(`discord-sso-auth-issuer listening on port ${port}${process.env.DEBUG ? " with debug output" : ""}!`))
