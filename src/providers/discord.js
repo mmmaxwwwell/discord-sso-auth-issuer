@@ -7,7 +7,7 @@ client.on('ready', () => {
 
 client.login(process.env.DISCORD_TOKEN)
 
-const getUserRoles = async (id) => new Promise((resolve,reject) => {
+const getUserRoles = (id) => new Promise( async (resolve, reject) => {
   const guild = client.guilds.get(process.env.AUTH_GUILD_ID)
   
   if(!guild)
