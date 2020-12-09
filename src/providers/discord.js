@@ -18,6 +18,7 @@ const getUserRoles = (id) => new Promise( async (resolve, reject) => {
     resolve(false)
 
   const roles = member.roles.cache.map(role => role.name)
+  console.log({roles})
   resolve(roles)
 })
 
