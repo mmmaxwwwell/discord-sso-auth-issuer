@@ -1,8 +1,8 @@
 var jwt = require('jsonwebtoken');
+var discord = require('./providers/discord')
 const express = require("express")
 const provider = require(`./providers/${process.env.PROVIDER || 'discord-oauth2'}.js`)
 const cookieParser = require("cookie-parser")
-const groupsProvider = require('./groupsProvider.js')
 const app = express()
 const HEADER_NAME = process.env.HEADER_NAME || "jwt_token";
 
@@ -16,7 +16,6 @@ const port = parseInt(process.env.PORT)
 app.use(cookieParser())
 
 app.get("/discord/callback", async (req, res, next) => {
-  
   const result = await provider.authorize({
     code: req.query.code,
     grantType: process.env.GRANT_TYPE,
@@ -40,13 +39,22 @@ app.get("/discord/callback", async (req, res, next) => {
     } = result)
   }catch(error){
     console.log({event:'error-destructuring-get-user-response', result})
-    res.status(401);
-    res.end();
+    res.status(401)
+    res.end()
+    return
+  }
+
+  let roles
+  try{
+    roles = await discord.getUserRoles(id)
+  }catch(error){
+    console.log({event:'error-getting-roles', id, username, discriminator, error })
+    res.status(401)
+    res.end()
     return
   }
 
   try{
-    const groups = await groupsProvider.getGroups(`${username}#${discriminator}`)
     const claims = {
       expires: Date.now() + parseInt(process.env.JWT_VALID_MINS) * 60000,
       id,
@@ -57,9 +65,7 @@ app.get("/discord/callback", async (req, res, next) => {
       discriminator,
       public_flags,
       flags,
-      admin: groups.includes("Admin"),
-      moderator: groups.includes("Moderator"),
-      groups
+      roles
     }
 
     const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'HS384'});
