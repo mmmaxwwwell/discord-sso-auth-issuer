@@ -31,7 +31,6 @@ const authorize = ({code, grantType, scope}) => new Promise(async(resolve,reject
 
   let access_token, expires_in
   try{
-    console.log("wtfmate", {tokenRequestResponse})
     expires_in = tokenRequestResponse.expires_in
     access_token = tokenRequestResponse.access_token
   }catch(ex){
