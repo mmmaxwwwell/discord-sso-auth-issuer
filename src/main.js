@@ -71,7 +71,7 @@ app.get("/discord/callback", async (req, res, next) => {
     res.end()
     return
   }
-  debug('headers', req.headers)
+  debug('headers', {headers: req.headers})
   try{
     const claims = {
       expires: Date.now() + parseInt(process.env.JWT_VALID_MINS) * 60000,
