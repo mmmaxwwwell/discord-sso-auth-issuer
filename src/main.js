@@ -16,6 +16,7 @@ const port = parseInt(process.env.PORT)
 app.use(cookieParser())
 
 app.get("/discord/callback", async (req, res, next) => {
+  debug('callback-params', {params: req.params})
   const result = await provider.authorize({
     code: req.query.code,
     grantType: process.env.GRANT_TYPE,
