@@ -27,13 +27,13 @@ app.get("/discord/callback", async (req, res, next) => {
       return
     }
     
-    const externalIp = "0.0.0.0"
-    if(signed_state.ip != externalIp){
-      console.log({event: 'signed-state-ip-invalid', state: signed_state, externalIp})
-      res.sendStatus(401)
-      res.end()
-      return
-    }
+    // const externalIp = "0.0.0.0"
+    // if(signed_state.ip != externalIp){
+    //   console.log({event: 'signed-state-ip-invalid', state: signed_state, externalIp})
+    //   res.sendStatus(401)
+    //   res.end()
+    //   return
+    // }
 
     if(signed_state.signedAt < Date.now() - (60 * 1000)){
       console.log({event: 'signed-state-timeout', state: signed_state, now: Date.now()})
@@ -89,6 +89,13 @@ app.get("/discord/callback", async (req, res, next) => {
     return
   }
 
+  if(!mfa_enabled){
+    console.log({event:'mfa-not-enabled', result})
+    res.status(401)
+    res.end()
+    return
+  }
+
   let roles
   try{
     roles = await discord.getUserRoles(id)
@@ -99,16 +106,6 @@ app.get("/discord/callback", async (req, res, next) => {
     return
   }
 
-  let forwardedFor, ip
-  try{
-    forwardedFor = req.headers['x-forwarded-for']
-    ip = req.ip;
-  } catch(error) {
-    console.log({event:'error-getting-source-ip', id, username, discriminator, error })
-    res.status(401)
-    res.end()
-    return
-  }
   try{
     const claims = {
       expires: Date.now() + parseInt(process.env.JWT_VALID_MINS) * 60000,
@@ -121,9 +118,6 @@ app.get("/discord/callback", async (req, res, next) => {
       public_flags,
       flags,
       roles,
-      forwardedFor,
-      ip,
-      domain: process.env.JWT_DOMAIN
     }
 
     const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'HS384'});
@@ -142,9 +136,7 @@ app.get("/discord/callback", async (req, res, next) => {
 })
 
 app.get("/", function (req, res, next) {
-  console.log(req)
   const signed_state = jwt.sign({
-    ip: "0.0.0.0",
     redirect: req.headers.host + req.headers['x-original-uri'],
     signedAt: Date.now()
   }, process.env.KEY, {algorithm: 'HS384'});
