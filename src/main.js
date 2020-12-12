@@ -132,7 +132,7 @@ app.get("/discord/callback", async (req, res, next) => {
     const options = { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
     debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
     res.cookie(HEADER_NAME, jwt_token, options)
-    res.redirect(redirectURI)
+    res.redirect('https://' + redirectURI)
     res.end()
     return
   }catch(error){
