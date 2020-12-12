@@ -16,8 +16,6 @@ const port = parseInt(process.env.PORT)
 app.use(cookieParser())
 
 app.get("/discord/callback", async (req, res, next) => {
-
-
   //validate signed state, get redirectURI
   let redirectURI
   try{
@@ -144,6 +142,7 @@ app.get("/discord/callback", async (req, res, next) => {
 })
 
 app.get("/", function (req, res, next) {
+  console.log(req)
   const signed_state = jwt.sign({
     ip: "0.0.0.0",
     redirect: req.headers.host + req.headers['x-original-uri'],
