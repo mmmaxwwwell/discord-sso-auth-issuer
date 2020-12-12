@@ -37,7 +37,7 @@ app.get("/discord/callback", async (req, res, next) => {
       return
     }
 
-    if(signed_state.signedAt > Date.now() - (60 * 1000)){
+    if(signed_state.signedAt < Date.now() - (60 * 1000)){
       console.log({event: 'signed-state-timeout', state: signed_state, now: Date.now()})
       res.sendStatus(401)
       res.end()
