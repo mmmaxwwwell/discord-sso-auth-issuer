@@ -16,6 +16,44 @@ const port = parseInt(process.env.PORT)
 app.use(cookieParser())
 
 app.get("/discord/callback", async (req, res, next) => {
+  //validate signed state, get redirectURI
+  let redirectURI
+  try{
+    const signed_state = jwt.verify(decodeURI(req.query.state), process.env.KEY, {algorithm: 'HS384'});
+    if(!signed_state){
+      console.log({event: 'signed-state-invalid', state: req.query.state})
+      res.sendStatus(401)
+      res.end()
+      return
+    }
+    
+    // const externalIp = "0.0.0.0"
+    // if(signed_state.ip != externalIp){
+    //   console.log({event: 'signed-state-ip-invalid', state: signed_state, externalIp})
+    //   res.sendStatus(401)
+    //   res.end()
+    //   return
+    // }
+
+    if(signed_state.signedAt < Date.now() - (60 * 1000)){
+      console.log({event: 'signed-state-timeout', state: signed_state, now: Date.now()})
+      res.sendStatus(401)
+      res.end()
+      return
+    }
+
+    redirectURI = signed_state.redirect
+    debug('validated-signed-state', {code: req.query.code, signed_state})
+    if(!redirectURI){
+      console.log({error: 'missing-redirect-uri', signed_state, state: req.query.state})
+      res.sendStatus(401)
+      res.end()
+      return
+    }
+  }catch(ex){
+    console.log({event: 'signed-state-val-exception', ex, signed_state})
+  }
+
   const result = await provider.authorize({
     code: req.query.code,
     grantType: process.env.GRANT_TYPE,
@@ -51,22 +89,18 @@ app.get("/discord/callback", async (req, res, next) => {
     return
   }
 
-  let roles
-  try{
-    roles = await discord.getUserRoles(id)
-  }catch(error){
-    console.log({event:'error-getting-roles', id, username, discriminator, error })
+  if(!mfa_enabled){
+    console.log({event:'mfa-not-enabled', result})
     res.status(401)
     res.end()
     return
   }
 
-  let forwardedFor, ip
+  let roles
   try{
-    forwardedFor = req.headers['x-forwarded-for']
-    ip = req.ip;
-  } catch(error) {
-    console.log({event:'error-getting-source-ip', id, username, discriminator, error })
+    roles = await discord.getUserRoles(id)
+  }catch(error){
+    console.log({event:'error-getting-roles', id, username, discriminator, error })
     res.status(401)
     res.end()
     return
@@ -84,17 +118,13 @@ app.get("/discord/callback", async (req, res, next) => {
       public_flags,
       flags,
       roles,
-      forwardedFor,
-      ip,
-      domain: process.env.JWT_DOMAIN
     }
 
     const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'HS384'});
-
     const options = { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
     debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
     res.cookie(HEADER_NAME, jwt_token, options)
-    res.redirect(process.env.SUCCESS_REDIRECT)
+    res.redirect('https://' + redirectURI)
     res.end()
     return
   }catch(error){
@@ -106,10 +136,13 @@ app.get("/discord/callback", async (req, res, next) => {
 })
 
 app.get("/", function (req, res, next) {
-  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}`)
+  const signed_state = jwt.sign({
+    redirect: req.headers.host + req.headers['x-original-uri'],
+    signedAt: Date.now()
+  }, process.env.KEY, {algorithm: 'HS384'});
+  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}&state=${encodeURI(signed_state)}`)
   res.end()
 })
-
 
 provider.init({
   clientId: process.env.CLIENT_ID,
