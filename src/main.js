@@ -109,7 +109,7 @@ app.get("/discord/callback", async (req, res, next) => {
 app.get("/", function (req, res, next) {
   debug('headers', {headers: req.headers})
   debug('params', {params: req.params})
-  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI + "&state=" + req.headers.host + req.headers['x-original-uri'])}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}`)
+  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI + "?state=" + req.headers.host + req.headers['x-original-uri'])}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}`)
   res.end()
 })
 
