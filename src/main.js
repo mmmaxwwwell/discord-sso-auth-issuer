@@ -16,8 +16,46 @@ const port = parseInt(process.env.PORT)
 app.use(cookieParser())
 
 app.get("/discord/callback", async (req, res, next) => {
-  console.log(req)
-  debug('callback-params', {params: req.params})
+
+
+  //validate signed state, get redirectURI
+  let redirectURI
+  try{
+    const signed_state = jwt.verify(decodeURI(req.query.state), process.env.KEY, {algorithm: 'HS384'});
+    if(!signed_state){
+      console.log({event: 'signed-state-invalid', state: req.query.state})
+      res.sendStatus(401)
+      res.end()
+      return
+    }
+    
+    const externalIp = "0.0.0.0"
+    if(signed_state.ip != externalIp){
+      console.log({event: 'signed-state-ip-invalid', state: signed_state, externalIp})
+      res.sendStatus(401)
+      res.end()
+      return
+    }
+
+    if(signed_state.signedAt > Date.now() - (60 * 1000)){
+      console.log({event: 'signed-state-timeout', state: signed_state, now: Date.now()})
+      res.sendStatus(401)
+      res.end()
+      return
+    }
+
+    redirectURI = signed_state.redirect
+    debug('validated-signed-state', {code: req.query.code, signed_state})
+    if(!redirectURI){
+      console.log({error: 'missing-redirect-uri', signed_state, state: req.query.state})
+      res.sendStatus(401)
+      res.end()
+      return
+    }
+  }catch(ex){
+    console.log({event: 'signed-state-val-exception', ex, signed_state})
+  }
+
   const result = await provider.authorize({
     code: req.query.code,
     grantType: process.env.GRANT_TYPE,
@@ -73,7 +111,6 @@ app.get("/discord/callback", async (req, res, next) => {
     res.end()
     return
   }
-  debug('headers', {headers: req.headers})
   try{
     const claims = {
       expires: Date.now() + parseInt(process.env.JWT_VALID_MINS) * 60000,
@@ -92,11 +129,10 @@ app.get("/discord/callback", async (req, res, next) => {
     }
 
     const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'HS384'});
-
     const options = { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
     debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
     res.cookie(HEADER_NAME, jwt_token, options)
-    res.redirect(process.env.SUCCESS_REDIRECT)
+    res.redirect(redirectURI)
     res.end()
     return
   }catch(error){
@@ -108,12 +144,14 @@ app.get("/discord/callback", async (req, res, next) => {
 })
 
 app.get("/", function (req, res, next) {
-  debug('headers', {headers: req.headers})
-  debug('params', {params: req.params})
-  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}&state=${encodeURI(req.headers.host)}${encodeURI(req.headers['x-original-uri'])}`)
+  const signed_state = jwt.sign({
+    ip: "0.0.0.0",
+    redirect: req.headers.host + req.headers['x-original-uri'],
+    signedAt: Date.now()
+  }, process.env.KEY, {algorithm: 'HS384'});
+  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}&state=${encodeURI(signed_state)}`)
   res.end()
 })
-
 
 provider.init({
   clientId: process.env.CLIENT_ID,
