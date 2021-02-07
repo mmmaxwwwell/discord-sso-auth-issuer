@@ -140,7 +140,7 @@ app.get("/", function (req, res, next) {
     redirect: req.headers.host + req.headers['x-original-uri'],
     signedAt: Date.now()
   }, process.env.KEY, {algorithm: 'HS384'});
-  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(`https://${process.env.AUTH_SUBDOMAIN}${process.env.DOMAIN}${process.env.REDIRECT_URI_PATH}`)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}&state=${encodeURI(signed_state)}`)
+  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(`https://${process.env.ISSUER_SUBDOMAIN}${process.env.DOMAIN}${process.env.REDIRECT_URI_PATH}`)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}&state=${encodeURI(signed_state)}`)
   res.end()
 })
 
