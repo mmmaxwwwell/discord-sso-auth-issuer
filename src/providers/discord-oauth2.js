@@ -7,6 +7,7 @@ const debug = (event, obj) => {
 }
 
 const init = ({clientId, clientSecret, redirectUri}) => {
+  debug({clientId, clientSecret, redirectUri})
   oauth = new DiscordOauth2({
     clientId,
     clientSecret,
