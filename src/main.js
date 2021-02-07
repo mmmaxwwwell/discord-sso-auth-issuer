@@ -147,7 +147,7 @@ app.get("/", function (req, res, next) {
 provider.init({
   clientId: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
-  redirectUri: process.env.REDIRECT_URI,
+  redirectUri: `https://${process.env.ISSUER_SUBDOMAIN}${process.env.DOMAIN}${process.env.REDIRECT_URI_PATH}`,
 })
 
 app.listen(port, () => console.log(`discord-sso-auth-issuer listening on port ${port}${process.env.DEBUG ? " with debug output" : ""}!`))
