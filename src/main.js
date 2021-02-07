@@ -11,7 +11,7 @@ const debug = (event, obj) => {
     console.log({event, obj})
 }
 
-const port = parseInt(process.env.PORT)
+const port = parseInt(process.env.ISSUER_PORT)
 
 app.use(cookieParser())
 
