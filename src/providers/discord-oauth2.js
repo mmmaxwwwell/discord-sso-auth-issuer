@@ -7,6 +7,7 @@ const debug = (event, obj) => {
 }
 
 const init = ({clientId, clientSecret, redirectUri}) => {
+  debug({clientId, clientSecret, redirectUri})
   oauth = new DiscordOauth2({
     clientId,
     clientSecret,
@@ -15,7 +16,7 @@ const init = ({clientId, clientSecret, redirectUri}) => {
 }
 
 const authorize = ({code, grantType, scope}) => new Promise(async(resolve,reject) => {
-  console.log({event: 'authorize', code, grantType, scope})
+  debug({event: 'authorize', code, grantType, scope})
   const tokenRequestResponse = await oauth.tokenRequest({
     code, 
     scope,
@@ -23,6 +24,7 @@ const authorize = ({code, grantType, scope}) => new Promise(async(resolve,reject
   }).catch(console.error);
 
   if(!tokenRequestResponse){
+    debug('token-request-response-false', tokenRequestResponse)
     resolve(false)
     return
   }

@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "cookie-parser": "^1.4.5",
-    "discord-oauth2": "^2.2.0",
+    "discord-oauth2": "^2.6.0",
     "discord.js": "^12.5.1",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1"
