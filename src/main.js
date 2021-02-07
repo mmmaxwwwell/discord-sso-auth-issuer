@@ -121,7 +121,7 @@ app.get("/discord/callback", async (req, res, next) => {
     }
 
     const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'HS384'});
-    const options = { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
+    const options = { domain: process.env.DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
     debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
     res.cookie(HEADER_NAME, jwt_token, options)
     res.redirect('https://' + redirectURI)
@@ -140,7 +140,7 @@ app.get("/", function (req, res, next) {
     redirect: req.headers.host + req.headers['x-original-uri'],
     signedAt: Date.now()
   }, process.env.KEY, {algorithm: 'HS384'});
-  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}&state=${encodeURI(signed_state)}`)
+  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(`https://${process.env.AUTH_SUBDOMAIN}${process.env.DOMAIN}${process.env.REDIRECT_URI_PATH}`)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}&state=${encodeURI(signed_state)}`)
   res.end()
 })
 
