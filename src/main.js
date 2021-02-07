@@ -121,11 +121,26 @@ app.get("/discord/callback", async (req, res, next) => {
     }
 
     const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'HS384'});
-    const options = { domain: process.env.DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
-    debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
+    
+    const options = { 
+      domain: process.env.DOMAIN, 
+      path: '/', 
+      secure: true, 
+      sameSite: 'Lax', 
+      httpOnly: true 
+    }
+
+    debug('issuing-jwt', { 
+      HEADER_NAME,
+      claims, 
+      options, 
+      redirectURI 
+    })
+    
     res.cookie(HEADER_NAME, jwt_token, options)
     res.redirect('https://' + redirectURI)
     res.end()
+    
     return
   }catch(error){
     console.log({event:'error-gen-jwt', error })
