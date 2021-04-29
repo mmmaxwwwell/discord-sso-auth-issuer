@@ -11,7 +11,7 @@ const debug = (event, obj) => {
     console.log({event, obj})
 }
 
-const port = parseInt(process.env.PORT)
+const port = parseInt(process.env.ISSUER_PORT)
 
 app.use(cookieParser())
 
@@ -121,11 +121,26 @@ app.get("/discord/callback", async (req, res, next) => {
     }
 
     const jwt_token = jwt.sign(claims, process.env.KEY, {algorithm: 'HS384'});
-    const options = { domain: process.env.JWT_DOMAIN, path: '/', secure: true, sameSite: 'Lax', httpOnly: true }
-    debug('issuing-jwt', { claims, options, redirect: process.env.SUCCESS_REDIRECT })
+    
+    const options = { 
+      domain: process.env.DOMAIN, 
+      path: '/', 
+      secure: true, 
+      sameSite: 'Lax', 
+      httpOnly: true 
+    }
+
+    debug('issuing-jwt', { 
+      HEADER_NAME,
+      claims, 
+      options, 
+      redirectURI 
+    })
+    
     res.cookie(HEADER_NAME, jwt_token, options)
     res.redirect('https://' + redirectURI)
     res.end()
+    
     return
   }catch(error){
     console.log({event:'error-gen-jwt', error })
@@ -140,14 +155,14 @@ app.get("/", function (req, res, next) {
     redirect: req.headers.host + req.headers['x-original-uri'],
     signedAt: Date.now()
   }, process.env.KEY, {algorithm: 'HS384'});
-  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}&state=${encodeURI(signed_state)}`)
+  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(`https://${process.env.ISSUER_SUBDOMAIN}${process.env.DOMAIN}${process.env.REDIRECT_URI_PATH}`)}&response_type=${process.env.RESPONSE_TYPE}&scope=${process.env.SCOPE}&state=${encodeURI(signed_state)}`)
   res.end()
 })
 
 provider.init({
   clientId: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
-  redirectUri: process.env.REDIRECT_URI,
+  redirectUri: `https://${process.env.ISSUER_SUBDOMAIN}${process.env.DOMAIN}${process.env.REDIRECT_URI_PATH}`,
 })
 
 app.listen(port, () => console.log(`discord-sso-auth-issuer listening on port ${port}${process.env.DEBUG ? " with debug output" : ""}!`))
